@@ -26,7 +26,8 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "string.h"
+#include "stdio.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -52,12 +53,11 @@
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 /* USER CODE BEGIN PFP */
-
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-
+void proccesDmaData(uint8_t sign);
 /* USER CODE END 0 */
 
 /**
@@ -67,7 +67,7 @@ void SystemClock_Config(void);
 int main(void)
 {
   /* USER CODE BEGIN 1 */
-
+	USART2_RegisterCallback(proccesDmaData);
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -100,13 +100,22 @@ int main(void)
   MX_USART2_UART_Init();
   MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
-
+  char data_to_send[100];
+  char actual_data_buffer[256];
+  strcpy(actual_data_buffer,"");
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+	  //Sending info about buffer capacity status
+	  	  uint16_t buffer_state = getBufferState();
+	  	  float buffer_percentage = (float) (buffer_state) / (float) (DMA_USART2_BUFFER_SIZE)*100;
+	  	  sprintf(data_to_send, "Buffer capacity: %d bytes, occupied memory: %d bytes, load [in %%]:%.2f%%\r\n", DMA_USART2_BUFFER_SIZE, buffer_state, buffer_percentage);
+
+	  	  USART2_PutBuffer((uint8_t *) data_to_send, strlen(data_to_send));
+	  	  LL_mDelay(1000);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -147,7 +156,47 @@ void SystemClock_Config(void)
 }
 
 /* USER CODE BEGIN 4 */
+void proccesDmaData(uint8_t sign)
+{
+	static uint8_t allow = 1;
+	static uint8_t calculate_sign = 0;
+	static uint8_t lowercase_char = 0;
+	static uint8_t uppercase_char = 0;
 
+		// type your algorithm here:
+	char data_number_to_send[100];
+	if(sign == '\r') return; //filtering endline character from PuTTY
+
+
+	if(sign == '#' && allow == 0){ //zapneme povolenie pre citanie znakov, startovaci znak je prijaty len raz
+		allow = 1;
+		calculate_sign = 0;
+		lowercase_char = 0;
+		uppercase_char = 0;
+	}
+	if(sign == '$' && allow == 1){ // po prijati ukoncovacieho znaku vypneme povolenie a vypiseme data
+		allow = 0;
+		sprintf(data_number_to_send, "Number of lowercase characters: %d , Number of uppercase characters: %d\r\n", lowercase_char,uppercase_char);
+		USART2_PutBuffer((uint8_t *) data_number_to_send, strlen(data_number_to_send));
+	}
+	if(calculate_sign > 35){//ak sme prekrocili pocet znakov o 35, prestaneme znaky ratat a zahodime data
+		allow = 0;
+		calculate_sign = 0;
+		lowercase_char = 0;
+		uppercase_char = 0;
+	}
+	if (allow == 1){//ratanie malych/velkych pismen
+		calculate_sign++;
+		if(sign >= 'a' && sign <= 'z'){
+			lowercase_char++;
+		}
+		if(sign >= 'A' && sign <= 'Z'){
+			uppercase_char++;
+		}
+
+	}
+
+}
 /* USER CODE END 4 */
 
 /**

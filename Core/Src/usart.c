@@ -21,7 +21,28 @@
 #include "usart.h"
 
 /* USER CODE BEGIN 0 */
+static uint16_t old_pos = 0;
 
+uint8_t bufferUSART2dma[DMA_USART2_BUFFER_SIZE];
+/* Declaration and initialization of callback function */
+static void (* USART2_ProcessData)(uint8_t data) = 0;
+
+void reinitializeBuffer() {
+	memset(bufferUSART2dma,0,DMA_USART2_BUFFER_SIZE); //set buffer memory to zeros
+	LL_DMA_DisableChannel(DMA1, LL_DMA_CHANNEL_6);  //disabling DMA channel
+	LL_DMA_ConfigAddresses(DMA1, LL_DMA_CHANNEL_6,  //reconfiguring DMA
+	 						 	LL_USART_DMA_GetRegAddr(USART2, LL_USART_DMA_REG_DATA_RECEIVE),
+	 							(uint32_t)bufferUSART2dma,
+	 							LL_DMA_GetDataTransferDirection(DMA1, LL_DMA_CHANNEL_6));
+	LL_DMA_SetDataLength(DMA1, LL_DMA_CHANNEL_6, DMA_USART2_BUFFER_SIZE);
+	LL_DMA_EnableChannel(DMA1, LL_DMA_CHANNEL_6);
+	LL_USART_EnableDMAReq_RX(USART2);
+	old_pos = 0; //set last reading position to start of buffer
+}
+
+uint16_t getBufferState() {
+	return old_pos;
+}
 /* USER CODE END 0 */
 
 /* USART2 init function */
@@ -58,7 +79,7 @@ void MX_USART2_UART_Init(void)
   /* USART2_RX Init */
   LL_DMA_SetDataTransferDirection(DMA1, LL_DMA_CHANNEL_6, LL_DMA_DIRECTION_PERIPH_TO_MEMORY);
 
-  LL_DMA_SetChannelPriorityLevel(DMA1, LL_DMA_CHANNEL_6, LL_DMA_PRIORITY_LOW);
+  LL_DMA_SetChannelPriorityLevel(DMA1, LL_DMA_CHANNEL_6, LL_DMA_PRIORITY_MEDIUM);
 
   LL_DMA_SetMode(DMA1, LL_DMA_CHANNEL_6, LL_DMA_MODE_NORMAL);
 
@@ -73,9 +94,9 @@ void MX_USART2_UART_Init(void)
   /* USART2_TX Init */
   LL_DMA_SetDataTransferDirection(DMA1, LL_DMA_CHANNEL_7, LL_DMA_DIRECTION_MEMORY_TO_PERIPH);
 
-  LL_DMA_SetChannelPriorityLevel(DMA1, LL_DMA_CHANNEL_7, LL_DMA_PRIORITY_LOW);
+  LL_DMA_SetChannelPriorityLevel(DMA1, LL_DMA_CHANNEL_7, LL_DMA_PRIORITY_MEDIUM);
 
-  LL_DMA_SetMode(DMA1, LL_DMA_CHANNEL_7, LL_DMA_MODE_CIRCULAR);
+  LL_DMA_SetMode(DMA1, LL_DMA_CHANNEL_7, LL_DMA_MODE_NORMAL);
 
   LL_DMA_SetPeriphIncMode(DMA1, LL_DMA_CHANNEL_7, LL_DMA_PERIPH_NOINCREMENT);
 
@@ -90,7 +111,20 @@ void MX_USART2_UART_Init(void)
   NVIC_EnableIRQ(USART2_IRQn);
 
   /* USER CODE BEGIN USART2_Init 1 */
+  LL_DMA_EnableIT_TC(DMA1, LL_DMA_CHANNEL_6);
+  LL_DMA_EnableIT_HT(DMA1, LL_DMA_CHANNEL_6);
+  LL_DMA_EnableIT_TE(DMA1, LL_DMA_CHANNEL_7);
 
+  LL_DMA_ConfigAddresses(DMA1, LL_DMA_CHANNEL_6,  //configuring DMA
+  	 						 	LL_USART_DMA_GetRegAddr(USART2, LL_USART_DMA_REG_DATA_RECEIVE),
+  	 							(uint32_t)bufferUSART2dma,
+  	 							LL_DMA_GetDataTransferDirection(DMA1, LL_DMA_CHANNEL_6));
+  LL_DMA_SetDataLength(DMA1, LL_DMA_CHANNEL_6, DMA_USART2_BUFFER_SIZE);
+  LL_DMA_EnableChannel(DMA1, LL_DMA_CHANNEL_6);
+  LL_USART_EnableDMAReq_RX(USART2);
+
+  LL_DMA_SetPeriphAddress(DMA1, LL_DMA_CHANNEL_7, LL_USART_DMA_GetRegAddr(USART2, LL_USART_DMA_REG_DATA_TRANSMIT));
+  LL_USART_EnableDMAReq_TX(USART2);
   /* USER CODE END USART2_Init 1 */
   USART_InitStruct.BaudRate = 115200;
   USART_InitStruct.DataWidth = LL_USART_DATAWIDTH_8B;
@@ -104,12 +138,49 @@ void MX_USART2_UART_Init(void)
   LL_USART_ConfigAsyncMode(USART2);
   LL_USART_Enable(USART2);
   /* USER CODE BEGIN USART2_Init 2 */
-
+  LL_USART_EnableIT_IDLE(USART2);
   /* USER CODE END USART2_Init 2 */
 
 }
 
 /* USER CODE BEGIN 1 */
+/* Register callback */
+void USART2_RegisterCallback(void *callback)
+{
+	if(callback != 0)
+	{
+		USART2_ProcessData = callback;
+	}
+}
+
+// Send data stored in buffer with DMA
+void USART2_PutBuffer(uint8_t *buffer, uint8_t length)
+{
+	LL_DMA_SetMemoryAddress(DMA1, LL_DMA_CHANNEL_7, (uint32_t)buffer);
+	LL_DMA_SetDataLength(DMA1, LL_DMA_CHANNEL_7, length);
+	LL_DMA_EnableIT_TC(DMA1, LL_DMA_CHANNEL_7);
+	LL_DMA_EnableChannel(DMA1, LL_DMA_CHANNEL_7);
+}
+
+// Receive data from DMA
+void USART2_CheckDmaReception(void)
+{
+	//type your implementation here
+	if(USART2_ProcessData == 0) return;
+
+	//uint16_t test = LL_DMA_GetDataLength(DMA1, LL_DMA_CHANNEL_6);
+	uint16_t pos = DMA_USART2_BUFFER_SIZE - LL_DMA_GetDataLength(DMA1, LL_DMA_CHANNEL_6);
+
+	for (uint16_t i = old_pos; i < pos; i++) { //reading from buffer from old_pos to pos, sending each char to callback function
+		USART2_ProcessData(bufferUSART2dma[i]);
+	}
+
+	old_pos = pos;
+
+	if(LL_DMA_GetDataLength(DMA1, LL_DMA_CHANNEL_6) <= 20) { //if remaining buffer capacity is less than 20 characters
+		reinitializeBuffer();
+	}
+}
 
 /* USER CODE END 1 */
 
