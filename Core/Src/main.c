@@ -67,7 +67,6 @@ void proccesDmaData(uint8_t sign);
 int main(void)
 {
   /* USER CODE BEGIN 1 */
- 	USART2_RegisterCallback(proccesDmaData);
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -100,18 +99,27 @@ int main(void)
   MX_USART2_UART_Init();
   MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
+  USART2_RegisterCallback(proccesDmaData); //DMA callback init
+
+   dutyCycle = 0; //default duty cycle
+   mode = 0;
+   countUpDown = 1;
+
+
+   /*While loop definitions*/
   char data_to_send[100];
   char actual_data_buffer[256];
   strcpy(actual_data_buffer,"");
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-	  setDutyCycle(99);
+	  dutyCycle = 99;
 	  LL_mDelay(1000);
-	  setDutyCycle(30);
+	  dutyCycle = 30;
 	  //Sending info about buffer capacity status
 	  	  uint16_t buffer_state = getBufferState();
 	  	  float buffer_percentage = (float) (buffer_state) / (float) (DMA_USART2_BUFFER_SIZE)*100;

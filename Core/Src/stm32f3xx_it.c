@@ -24,6 +24,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "usart.h"
+#include "tim.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -249,7 +250,27 @@ void DMA1_Channel7_IRQHandler(void)
 void TIM2_IRQHandler(void)
 {
   /* USER CODE BEGIN TIM2_IRQn 0 */
-
+	if(LL_TIM_IsActiveFlag_UPDATE(TIM2)) {
+		if(mode == 0) { //automatic mode
+			if (countUpDown == 1) { //counting up
+				if(dutyCycle >= 99) { //counted up to 99
+					countUpDown = 0;
+					dutyCycle = 98;
+				} else {
+					dutyCycle++;
+				}
+			} else { //counting down
+				if(dutyCycle <= 0) { //counted down to 0
+					countUpDown = 1;
+					dutyCycle = 1;
+				} else {
+					dutyCycle--;
+				}
+			}
+		}
+		setDutyCycle(dutyCycle);
+		LL_TIM_ClearFlag_UPDATE(TIM2);
+	}
   /* USER CODE END TIM2_IRQn 0 */
   /* USER CODE BEGIN TIM2_IRQn 1 */
 

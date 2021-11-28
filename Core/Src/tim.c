@@ -51,7 +51,7 @@ void MX_TIM2_Init(void)
   TIM_InitStruct.Autoreload = 99;
   TIM_InitStruct.ClockDivision = LL_TIM_CLOCKDIVISION_DIV1;
   LL_TIM_Init(TIM2, &TIM_InitStruct);
-  LL_TIM_DisableARRPreload(TIM2);
+  LL_TIM_EnableARRPreload(TIM2);
   LL_TIM_SetClockSource(TIM2, LL_TIM_CLOCKSOURCE_INTERNAL);
   LL_TIM_OC_EnablePreload(TIM2, LL_TIM_CHANNEL_CH1);
   TIM_OC_InitStruct.OCMode = LL_TIM_OCMODE_PWM1;
@@ -61,7 +61,7 @@ void MX_TIM2_Init(void)
   TIM_OC_InitStruct.OCPolarity = LL_TIM_OCPOLARITY_HIGH;
   LL_TIM_OC_Init(TIM2, LL_TIM_CHANNEL_CH1, &TIM_OC_InitStruct);
   LL_TIM_OC_DisableFast(TIM2, LL_TIM_CHANNEL_CH1);
-  TIM_OC_InitStruct.OCMode = LL_TIM_OCMODE_FROZEN;
+  TIM_OC_InitStruct.OCMode = LL_TIM_OCMODE_ACTIVE;
   LL_TIM_OC_Init(TIM2, LL_TIM_CHANNEL_CH2, &TIM_OC_InitStruct);
   LL_TIM_OC_DisableFast(TIM2, LL_TIM_CHANNEL_CH2);
   LL_TIM_SetTriggerOutput(TIM2, LL_TIM_TRGO_RESET);
@@ -69,6 +69,8 @@ void MX_TIM2_Init(void)
   /* USER CODE BEGIN TIM2_Init 2 */
   LL_TIM_EnableCounter(TIM2);
   TIM2->CCER|=0x00000001;
+  LL_TIM_EnableIT_UPDATE(TIM2);
+  LL_TIM_EnableCounter(TIM2);
   /* USER CODE END TIM2_Init 2 */
   LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_GPIOA);
     /**TIM2 GPIO Configuration
