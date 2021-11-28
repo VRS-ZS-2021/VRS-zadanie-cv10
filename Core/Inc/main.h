@@ -70,6 +70,7 @@ void Error_Handler(void);
 
 /* USER CODE BEGIN EFP */
 uint8_t dutyCycle;
+uint8_t dutyCycleManual;
 uint8_t mode;
 uint8_t countUpDown;
 /* USER CODE END EFP */

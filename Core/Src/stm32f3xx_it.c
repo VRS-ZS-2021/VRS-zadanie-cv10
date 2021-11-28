@@ -267,6 +267,9 @@ void TIM2_IRQHandler(void)
 					dutyCycle--;
 				}
 			}
+		} else {
+			if (dutyCycleManual > dutyCycle) dutyCycle++;
+			else if (dutyCycleManual < dutyCycle) dutyCycle--;
 		}
 		setDutyCycle(dutyCycle);
 		LL_TIM_ClearFlag_UPDATE(TIM2);

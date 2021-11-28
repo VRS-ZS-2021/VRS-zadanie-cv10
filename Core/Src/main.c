@@ -104,6 +104,7 @@ int main(void)
    dutyCycle = 0; //default duty cycle
    mode = 0;
    countUpDown = 1;
+   dutyCycleManual = 0;
 
 
    /*While loop definitions*/
@@ -117,9 +118,9 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-	  dutyCycle = 99;
+	  dutyCycleManual = 30;
 	  LL_mDelay(1000);
-	  dutyCycle = 30;
+	  dutyCycleManual = 100;
 	  //Sending info about buffer capacity status
 	  	  uint16_t buffer_state = getBufferState();
 	  	  float buffer_percentage = (float) (buffer_state) / (float) (DMA_USART2_BUFFER_SIZE)*100;
