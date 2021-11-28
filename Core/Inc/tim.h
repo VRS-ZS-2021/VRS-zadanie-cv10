@@ -38,7 +38,7 @@ extern "C" {
 void MX_TIM2_Init(void);
 
 /* USER CODE BEGIN Prototypes */
-
+void setDutyCycle(uint8_t D);
 /* USER CODE END Prototypes */
 
 #ifdef __cplusplus

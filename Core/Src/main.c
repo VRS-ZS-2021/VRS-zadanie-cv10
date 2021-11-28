@@ -67,7 +67,7 @@ void proccesDmaData(uint8_t sign);
 int main(void)
 {
   /* USER CODE BEGIN 1 */
-	USART2_RegisterCallback(proccesDmaData);
+ 	USART2_RegisterCallback(proccesDmaData);
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -109,6 +109,9 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+	  setDutyCycle(99);
+	  LL_mDelay(1000);
+	  setDutyCycle(30);
 	  //Sending info about buffer capacity status
 	  	  uint16_t buffer_state = getBufferState();
 	  	  float buffer_percentage = (float) (buffer_state) / (float) (DMA_USART2_BUFFER_SIZE)*100;
