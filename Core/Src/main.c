@@ -28,6 +28,7 @@
 /* USER CODE BEGIN Includes */
 #include "string.h"
 #include "stdio.h"
+#include "stdlib.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -170,43 +171,54 @@ void SystemClock_Config(void)
 /* USER CODE BEGIN 4 */
 void proccesDmaData(uint8_t sign)
 {
-	static uint8_t allow = 1;
-	static uint8_t calculate_sign = 0;
-	static uint8_t lowercase_char = 0;
-	static uint8_t uppercase_char = 0;
+	if(sign == '\r') return; //odstranenie znaku, ktory sa vygeneruje po stlaceni enteru v puTTY
 
-		// type your algorithm here:
-	char data_number_to_send[100];
-	if(sign == '\r') return; //filtering endline character from PuTTY
+	static char readed_text[20] = "";
+	char new_letter[2] = {sign,'\0'};
+	static char read_duty_cycle_text[10] = "";
+	int read_duty_cycle = 0,pom = 0;
+	static char read[10] = "";
 
+	strcat(readed_text,new_letter);
 
-	if(sign == '#' && allow == 0){ //zapneme povolenie pre citanie znakov, startovaci znak je prijaty len raz
-		allow = 1;
-		calculate_sign = 0;
-		lowercase_char = 0;
-		uppercase_char = 0;
+	if(strlen("$manual$") == strlen(readed_text))
+	{
+		mode = 1;
 	}
-	if(sign == '$' && allow == 1){ // po prijati ukoncovacieho znaku vypneme povolenie a vypiseme data
-		allow = 0;
-		sprintf(data_number_to_send, "Number of lowercase characters: %d , Number of uppercase characters: %d\r\n", lowercase_char,uppercase_char);
-		USART2_PutBuffer((uint8_t *) data_number_to_send, strlen(data_number_to_send));
-	}
-	if(calculate_sign > 35){//ak sme prekrocili pocet znakov o 35, prestaneme znaky ratat a zahodime data
-		allow = 0;
-		calculate_sign = 0;
-		lowercase_char = 0;
-		uppercase_char = 0;
-	}
-	if (allow == 1){//ratanie malych/velkych pismen
-		calculate_sign++;
-		if(sign >= 'a' && sign <= 'z'){
-			lowercase_char++;
-		}
-		if(sign >= 'A' && sign <= 'Z'){
-			uppercase_char++;
-		}
 
+	if(strlen("$auto$") == strlen(readed_text))
+	{
+		mode = 0;
+		return;
 	}
+
+	if(mode == 1)
+	{
+     		if(strlen("$PWM") == strlen(readed_text))
+           	{
+           		 read_duty_cycle = 1;
+        	}
+        	if(read_duty_cycle == 1) //nacitanie retazca pre hodnoty duty_cycle
+        	{
+            		strcat(read_duty_cycle_text,new_letter);
+            		pom++;
+        	}
+        	if(pom == 3) 
+        	{
+            		read_duty_cycle = 0;
+            		if (sign == '$')
+            		{
+                		for(int j=0;j<2;j++)
+                		{
+                    			read[j]=read_duty_cycle_text[j+1]; //uprava retazca pretoze berie pismeno M
+                		}
+                		dutyCycleManual = atoi(read); 
+
+            		}
+
+        	}
+	}
+
 
 }
 /* USER CODE END 4 */
