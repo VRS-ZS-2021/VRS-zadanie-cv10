@@ -174,7 +174,7 @@ void proccesDmaData(uint8_t sign)
     if(sign == '\r') return; //odstranenie znaku, ktory sa vygeneruje po stlaceni enteru v puTTY
 
     static char readed_text[20] = "";
-    static start = 0;
+    static int start = 0;
     char new_letter[2] = {sign,'\0'};
     static char read_duty_cycle_text[10] = "";
 
