@@ -171,54 +171,40 @@ void SystemClock_Config(void)
 /* USER CODE BEGIN 4 */
 void proccesDmaData(uint8_t sign)
 {
-	if(sign == '\r') return; //odstranenie znaku, ktory sa vygeneruje po stlaceni enteru v puTTY
+    if(sign == '\r') return; //odstranenie znaku, ktory sa vygeneruje po stlaceni enteru v puTTY
 
-	static char readed_text[20] = "";
-	char new_letter[2] = {sign,'\0'};
-	static char read_duty_cycle_text[10] = "";
-	int read_duty_cycle = 0,pom = 0;
-	static char read[10] = "";
+    static char readed_text[20] = "";
+    static start = 0;
+    char new_letter[2] = {sign,'\0'};
+    static char read_duty_cycle_text[10] = "";
 
-	strcat(readed_text,new_letter);
-
-	if(strlen("$manual$") == strlen(readed_text))
-	{
-		mode = 1;
-	}
-
-	if(strlen("$auto$") == strlen(readed_text))
-	{
-		mode = 0;
-		return;
-	}
-
-	if(mode == 1)
-	{
-     		if(strlen("$PWM") == strlen(readed_text))
-           	{
-           		 read_duty_cycle = 1;
-        	}
-        	if(read_duty_cycle == 1) //nacitanie retazca pre hodnoty duty_cycle
-        	{
-            		strcat(read_duty_cycle_text,new_letter);
-            		pom++;
-        	}
-        	if(pom == 3) 
-        	{
-            		read_duty_cycle = 0;
-            		if (sign == '$')
-            		{
-                		for(int j=0;j<2;j++)
-                		{
-                    			read[j]=read_duty_cycle_text[j+1]; //uprava retazca pretoze berie pismeno M
-                		}
-                		dutyCycleManual = atoi(read); 
-
-            		}
-
-        	}
-	}
-
+    if(sign == '$' && start == 0){
+        start = 1;
+    }
+    if(start == 1){
+        strcat(readed_text, new_letter);
+    }
+    if( sign == '$' && start == 1){
+    	stop = 0;
+        if(strcmp("$manual$",readed_text) == 0){
+            mode = 1;
+            strcpy(readed_text,"");
+        }
+        if(strcmp("$auto$",readed_text) == 0){
+            mode = 0;
+            strcpy(readed_text,"");
+            
+        }
+        if(mode == 1){
+            if(strncmp("$PWM",readed_text,4)==0){
+                for(int j = 0; j<3; j++){
+                    read_duty_cycle_text[j]=readed_text[j+4];
+                }
+                dutyCycleManual = atoi(read_duty_cycle_text);
+                strcpy(readed_text,"");
+            }
+        }
+    }
 
 }
 /* USER CODE END 4 */
