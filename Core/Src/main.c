@@ -119,16 +119,13 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-	  dutyCycleManual = 30;
-	  LL_mDelay(1000);
-	  dutyCycleManual = 100;
-	  //Sending info about buffer capacity status
-	  	  uint16_t buffer_state = getBufferState();
+	  //Sending info about buffer capacity status - debug
+	  	  /*uint16_t buffer_state = getBufferState();
 	  	  float buffer_percentage = (float) (buffer_state) / (float) (DMA_USART2_BUFFER_SIZE)*100;
 	  	  sprintf(data_to_send, "Buffer capacity: %d bytes, occupied memory: %d bytes, load [in %%]:%.2f%%\r\n", DMA_USART2_BUFFER_SIZE, buffer_state, buffer_percentage);
 
 	  	  USART2_PutBuffer((uint8_t *) data_to_send, strlen(data_to_send));
-	  	  LL_mDelay(1000);
+	  	  LL_mDelay(10000);*/
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
