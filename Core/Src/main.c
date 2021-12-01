@@ -185,7 +185,7 @@ void proccesDmaData(uint8_t sign)
         strcat(readed_text, new_letter);
     }
     if( sign == '$' && start == 1){
-    	stop = 0;
+    	start = 0;
         if(strcmp("$manual$",readed_text) == 0){
             mode = 1;
             strcpy(readed_text,"");
