@@ -171,29 +171,26 @@ void SystemClock_Config(void)
 /* USER CODE BEGIN 4 */
 void proccesDmaData(uint8_t sign)
 {
-    if(sign == '\r') return; //odstranenie znaku, ktory sa vygeneruje po stlaceni enteru v puTTY
+	if(sign == '\r') return; //odstranenie znaku, ktory sa vygeneruje po stlaceni enteru v puTTY
 
-    static char readed_text[20] = "";
-    static int start = 0;
-    char new_letter[2] = {sign,'\0'};
-    static char read_duty_cycle_text[10] = "";
+	static char readed_text[20] = "";
+	static int start = 0;
+	char new_letter[2] = {sign,'\0'};
+	static char read_duty_cycle_text[10] = "";
 
     if(sign == '$' && start == 0){
         start = 1;
     }
-    if(start == 1){
-        strcat(readed_text, new_letter);
-    }
-    if( sign == '$' && start == 1){
+    else if( sign == '$' && start == 1){
     	start = 0;
-        if(strcmp("$manual$",readed_text) == 0){
+        if(strcmp("$manual",readed_text) == 0){
             mode = 1;
             strcpy(readed_text,"");
         }
-        if(strcmp("$auto$",readed_text) == 0){
+        if(strcmp("$auto",readed_text) == 0){
             mode = 0;
             strcpy(readed_text,"");
-            
+
         }
         if(mode == 1){
             if(strncmp("$PWM",readed_text,4)==0){
@@ -205,6 +202,9 @@ void proccesDmaData(uint8_t sign)
             }
         }
     }
+    if(start == 1){
+         strcat(readed_text, new_letter);
+    } else strcpy(readed_text,"");
 
 }
 /* USER CODE END 4 */
