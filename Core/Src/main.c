@@ -197,7 +197,7 @@ void proccesDmaData(uint8_t sign)
                 strcpy(readed_text,"");
 	    }	    
             if(strncmp("$PWM",readed_text,4)==0){
-		if((readed_text[4] > '0' && readed_text[4] < '9') && (readed_text[5] > '0' && readed_text[5] < '9')) {
+		if((readed_text[4] >= '0' && readed_text[4] <= '9') && (readed_text[5] >= '0' && readed_text[5] <= '9')) {
                     for(int j = 0; j<2; j++){
                         read_duty_cycle_text[j]=readed_text[j+4];
                     }
